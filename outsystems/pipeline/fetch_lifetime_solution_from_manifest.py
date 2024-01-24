@@ -23,7 +23,7 @@ from outsystems.vars.pipeline_vars import SOLUTION_TIMEOUT_IN_SECS, SOLUTION_SLE
     SOLUTION_GENERATING_SOLUTION_STATUS, SOLUTION_COMPLETED_STATUS, SOLUTION_ABORTED_STATUS
 
 # Functions
-from outsystems.lifetime.lifetime_solutions import create_solution, get_solution_status, get_solution_link
+from outsystems.lifetime.lifetime_solutions import create_solution, get_solution_status, get_solution_url
 from outsystems.file_helpers.file import load_data, download_package, bytes_human_readable_size
 from outsystems.lifetime.lifetime_base import build_lt_endpoint
 from outsystems.manifest.manifest_base import get_environment_details
@@ -63,7 +63,7 @@ def main(artifact_dir: str, lt_http_proto: str, lt_url: str, lt_api_endpoint: st
 
     # Wait for solution package creation to finish
     wait_counter = 0
-    link_available = False
+    package_url_available = False
     check_status = None
     IN_PROGESS_STATUS = [SOLUTION_CREATED_STATUS, SOLUTION_READY_STATUS, SOLUTION_GATHERING_DEPENDENCIES_STATUS,
                          SOLUTION_GETTING_BINARIES_STATUS, SOLUTION_GENERATING_META_MODEL_STATUS,
@@ -88,7 +88,7 @@ def main(artifact_dir: str, lt_http_proto: str, lt_url: str, lt_api_endpoint: st
         solution_status = get_solution_status(artifact_dir, lt_endpoint, lt_token, env_tuple[1], solution_key)
         if solution_status["Status"] == SOLUTION_COMPLETED_STATUS:
             # Package was created successfully
-            link_available = True
+            package_url_available = True
             break
         elif solution_status["Status"] == SOLUTION_ABORTED_STATUS:
             print(" - {}. Reason: {}".format(solution_status["Status"], solution_status["StatusReason"]), flush=True)
@@ -105,13 +105,13 @@ def main(artifact_dir: str, lt_http_proto: str, lt_url: str, lt_api_endpoint: st
             raise NotImplementedError("Unknown solution code status: {}.".format(solution_status["Status"]))
 
     # When the package is created, download it using the provided key
-    if link_available:
+    if package_url_available:
         print("Solution package {} created successfully.".format(solution_key), flush=True)
-        solution_link = get_solution_link(artifact_dir, lt_endpoint, lt_token, env_tuple[1], solution_key)
+        solution_url = get_solution_url(artifact_dir, lt_endpoint, lt_token, env_tuple[1], solution_key)
 
         file_name = solution_name + SOLUTIONS_OSP_FILE
         file_path = os.path.join(artifact_dir, SOLUTIONS_FOLDER, file_name)
-        download_package(file_path, lt_token, solution_link)
+        download_package(file_path, lt_token, solution_url)
 
         print("Solution package successfully downloaded as '{}' ({}).".format(file_name, bytes_human_readable_size(os.path.getsize(file_path))), flush=True)
     else:

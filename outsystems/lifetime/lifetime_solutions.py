@@ -8,7 +8,7 @@ from outsystems.exceptions.no_deployments import NoDeploymentsError
 from outsystems.exceptions.not_enough_permissions import NotEnoughPermissionsError
 from outsystems.exceptions.server_error import ServerError
 # Functions
-from outsystems.lifetime.lifetime_base import send_post_request, send_get_request, send_link_request
+from outsystems.lifetime.lifetime_base import send_post_request, send_get_request
 from outsystems.file_helpers.file import store_data
 # Variables
 from outsystems.vars.lifetime_vars import ENVIRONMENTS_ENDPOINT, ENVIRONMENT_SOLUTION_ENDPOINT, ENVIRONMENT_SOLUTION_SUCCESS_CODE, \
@@ -66,19 +66,19 @@ def get_solution_status(artifact_dir: str, endpoint: str, auth_token: str, envir
 
 
 # Returns download link of source code package of the specified application in a given environment.
-def get_solution_link(artifact_dir: str, endpoint: str, auth_token: str, environment_key: str, solution_key: str):
+def get_solution_url(artifact_dir: str, endpoint: str, auth_token: str, environment_key: str, solution_key: str):
     # Builds the API call
     query = "{}/{}/{}/{}".format(ENVIRONMENTS_ENDPOINT, environment_key, ENVIRONMENT_SOLUTION_ENDPOINT, solution_key)
 
     # Sends the request
-    response = send_link_request(endpoint, auth_token, query, None)
+    response = send_get_request(endpoint, auth_token, query, None)
     status_code = int(response["http_status"])
     if status_code == ENVIRONMENT_SOLUTION_LINK_SUCCESS_CODE:
         # Stores the result
         filename = "{}{}".format(solution_key, SOLUTIONS_LINK_FILE)
         filename = os.path.join(SOLUTIONS_FOLDER, filename)
         store_data(artifact_dir, filename, response["response"])
-        return response["response"]
+        return response["response"]["url"]
     elif status_code == ENVIRONMENT_SOLUTION_LINK_FAILED_CODE:
         raise ServerError("Failed to access the solution package link. Details: {}".format(
             response["response"]))
