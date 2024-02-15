@@ -24,9 +24,11 @@ from outsystems.lifetime.lifetime_environments import get_environment_key
 from outsystems.lifetime.lifetime_deployments import get_deployment_status, get_deployment_info, \
     send_binary_deployment, delete_deployment, start_deployment, continue_deployment, get_running_deployment, \
     check_deployment_two_step_deploy_status
-from outsystems.file_helpers.file import store_data
+from outsystems.file_helpers.file import store_data, is_valid_os_package
 from outsystems.lifetime.lifetime_base import build_lt_endpoint
 from outsystems.vars.vars_base import get_configuration_value, load_configuration_file
+# Exceptions
+from outsystems.exceptions.invalid_os_package import InvalidOutSystemsPackage
 
 
 # ############################################################# SCRIPT ##############################################################
@@ -51,6 +53,10 @@ def main(artifact_dir: str, lt_http_proto: str, lt_url: str, lt_api_endpoint: st
         deployments = get_running_deployment(artifact_dir, lt_endpoint, lt_token, dest_env_key)
 
     # LT is free to deploy
+    # Validate if file has OutSystems package extension
+    if not is_valid_os_package(package_path):
+        raise InvalidOutSystemsPackage("Binary file is not an OutSystems package. Expected 'osp' or 'oap' as file extension.")
+
     # Send the deployment plan and grab the key
     dep_plan_key = send_binary_deployment(artifact_dir, lt_endpoint, lt_token, lt_api_version, dest_env_key, package_path)
     print("Deployment plan {} created successfully.".format(dep_plan_key), flush=True)
